@@ -7,8 +7,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
     <style>
       #pdf-container {
-        width: 100vw;
-        height: 100vh;
+        width: 100%;
+        height: 600px;
       }
     </style>
   </head>
@@ -20,26 +20,33 @@
       const pdfUrl = "demo.pdf";
       const pdfContainer = document.getElementById("pdf-container");
 
+      // Function to render PDF pages recursively
+      function renderPage(pageNum, pdfDoc) {
+        if (pageNum > pdfDoc.numPages) {
+          return; // Exit condition
+        }
+        pdfDoc.getPage(pageNum).then((page) => {
+          const canvas = document.createElement("canvas");
+          const ctx = canvas.getContext("2d");
+          const viewport = page.getViewport({ scale: 1.5 });
+          canvas.height = viewport.height;
+          canvas.width = viewport.width;
+
+          const renderContext = {
+            canvasContext: ctx,
+            viewport: viewport,
+          };
+
+          page.render(renderContext).promise.then(() => {
+            pdfContainer.appendChild(canvas);
+            renderPage(pageNum + 1, pdfDoc); // Render next page recursively
+          });
+        });
+      }
+
       // Load PDF document
       pdfjsLib.getDocument(pdfUrl).promise.then((pdfDoc) => {
-        for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
-          pdfDoc.getPage(pageNum).then((page) => {
-            const canvas = document.createElement("canvas");
-            const ctx = canvas.getContext("2d");
-            const viewport = page.getViewport({ scale: 1.5 });
-            canvas.height = viewport.height;
-            canvas.width = viewport.width;
-
-            const renderContext = {
-              canvasContext: ctx,
-              viewport: viewport,
-            };
-
-            page.render(renderContext).promise.then(() => {
-              pdfContainer.appendChild(canvas);
-            });
-          });
-        }
+        renderPage(1, pdfDoc); // Start rendering from page 1
       });
     </script>
   </body>
