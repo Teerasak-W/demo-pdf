@@ -27,7 +27,7 @@
       const pdfContainer = document.getElementById("pdf-container");
 
       // Function to render PDF pages recursively
-      function renderPage(pageNum, pdfDoc) {
+      function renderPage(pageNum, pdfDoc, devicePixelRatio) {
         if (pageNum > pdfDoc.numPages) {
           return; // Exit condition
         }
@@ -36,9 +36,9 @@
           const ctx = canvas.getContext("2d");
           const viewport = page.getViewport({ scale: 1 });
           const containerWidth = pdfContainer.clientWidth;
-          const scale = containerWidth / viewport.width;
+          const scale = (containerWidth / viewport.width) * devicePixelRatio;
           canvas.height = viewport.height * scale;
-          canvas.width = containerWidth;
+          canvas.width = containerWidth * devicePixelRatio;
 
           const renderContext = {
             canvasContext: ctx,
@@ -47,14 +47,15 @@
 
           page.render(renderContext).promise.then(() => {
             pdfContainer.appendChild(canvas);
-            renderPage(pageNum + 1, pdfDoc); // Render next page recursively
+            renderPage(pageNum + 1, pdfDoc, devicePixelRatio); // Render next page recursively
           });
         });
       }
 
       // Load PDF document
+      const devicePixelRatio = window.devicePixelRatio || 1;
       pdfjsLib.getDocument(pdfUrl).promise.then((pdfDoc) => {
-        renderPage(1, pdfDoc); // Start rendering from page 1
+        renderPage(1, pdfDoc, devicePixelRatio); // Start rendering from page 1
       });
     </script>
   </body>
